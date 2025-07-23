@@ -26,7 +26,6 @@ class SignupSerializer(serializers.ModelSerializer):
             email=validated_data['email'].lower(),
             password=validated_data['password']
         )
-        Profile.objects.create(user=user)
         return user
 
 

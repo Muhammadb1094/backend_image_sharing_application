@@ -7,5 +7,7 @@ from . import views
 
 urlpatterns = [
     path('upload-image/', views.UploadImagePost.as_view(), name='upload_image_post'),
-    # path('login/', views.LoginView.as_view(), name='login'),
+    path('feed/', views.FeedImagePostView.as_view(), name='feed'),
+    path('all-posts/', views.AllImagePostView.as_view(), name='all_posts'),
+    path('like-unlike/<post_id>/', views.LikePostView.as_view(), name='like_post'),
 ]

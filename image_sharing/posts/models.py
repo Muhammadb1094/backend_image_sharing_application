@@ -1,7 +1,12 @@
 import uuid
+from users.models import Profile
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.db.models import F, Case, When, Value, IntegerField
+
 
 class Image(models.Model):
     """
@@ -36,8 +41,36 @@ class ImagePost(models.Model):
         ]
         ordering = ['-created_at']
 
+    def increment_likes_count(self):
+        self.likes_count = F('likes_count') + 1
+        self.save(update_fields=['likes_count'])
+
+    def decrement_likes_count(self):
+        self.likes_count = F('likes_count') - 1
+        self.save(update_fields=['likes_count'])
+
     def __str__(self):
         return f"{self.user.email} - {self.caption[:10]}"
+
+
+@receiver(post_save, sender=ImagePost)
+def update_posts_count_on_create(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.filter(user=instance.user).update(
+            posts_count=F('posts_count') + 1
+        )
+
+
+@receiver(post_delete, sender=ImagePost)
+def update_posts_count_on_delete(sender, instance, **kwargs):
+    if not instance.is_deleted:  # Only decrease if it wasn't soft deleted
+        Profile.objects.filter(user=instance.user).update(
+            posts_count=Case(
+                When(posts_count__gt=0, then=F('posts_count') - 1),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        )
 
 
 class Like(models.Model):
@@ -57,3 +90,12 @@ class Like(models.Model):
 
     def __str__(self):
         return f"{self.user.email} likes post {self.post.id}"
+
+@receiver(post_delete, sender=Like)
+def update_likes_count_on_delete(sender, instance, **kwargs):
+    instance.post.decrement_likes_count()
+
+@receiver(post_save, sender=Like)
+def update_likes_count_on_create(sender, instance, created, **kwargs):
+    if created:
+        instance.post.increment_likes_count()
