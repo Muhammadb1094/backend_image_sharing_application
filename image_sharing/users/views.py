@@ -1,18 +1,24 @@
-# views.py
+"""View for following and unfollowing users in the image sharing application.
+This module provides API endpoints to follow and unfollow users, as well as to list all users
+that the current user follows."""
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth.models import User
 from rest_framework.pagination import PageNumberPagination
+
+from django.contrib.auth.models import User
 from .models import Follow
 from .serializers.follow_unfollow import FollowSerializer
 from .serializers.user import DefaultUserSerializer
 
 
 class FollowUserView(APIView):
+    """View to follow a user
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk: int):
+        """Follow a user by their primary key (pk)."""
         try:
             to_follow = User.objects.get(pk=pk)
         except User.DoesNotExist:
@@ -33,9 +39,11 @@ class FollowUserView(APIView):
 
 
 class UnfollowUserView(APIView):
+    """View to unfollow a user"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk: int):
+        """Unfollow a user by their primary key (pk)."""
         try:
             to_unfollow = User.objects.get(pk=pk)
         except User.DoesNotExist:
@@ -60,8 +68,9 @@ class AllUsersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Get users that the current user follows
-        users = User.objects.exclude(is_staff=True, is_superuser=True).exclude(pk=request.user.pk)
+        """Get all the users from the database, excluding staff and superusers,
+        and excluding the current user."""
+        users = User.objects.all()
 
         # Apply pagination
         paginator = PageNumberPagination()

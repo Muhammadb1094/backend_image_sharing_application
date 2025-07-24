@@ -1,3 +1,4 @@
+"""Admin configuration for the image sharing application."""
 from django.contrib import admin
 from . import models
 

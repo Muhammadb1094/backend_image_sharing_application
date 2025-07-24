@@ -1,3 +1,7 @@
+"""Models for image posts and associated likes in an image sharing application.
+This module includes denormalized fields for performance optimization,
+and uses UUIDs for better distribution in sharded databases.
+It also includes signals to automatically update post and like counts."""
 import uuid
 from users.models import Profile
 

@@ -1,3 +1,7 @@
+"""Models for user profiles and follow relationships in an image sharing application.
+This module includes denormalized fields for performance optimization,
+and uses UUIDs for follow relationships.
+It also includes signals to automatically create profiles and update follow counts."""
 import uuid
 from django.db import models
 from django.contrib.auth.models import User

@@ -1,3 +1,6 @@
+"""Views for handling image posts in the image sharing application.
+This module contains views for uploading image posts, fetching feeds,
+and liking posts."""
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -33,6 +36,8 @@ class FeedImagePostView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Handle GET request to fetch image posts from followed users.
+        Returns a paginated list of posts ordered by creation date."""
         # Get list of users that the current user follows
         following_users = request.user.following.values_list('followed', flat=True)
 
@@ -57,6 +62,7 @@ class AllImagePostView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Handle GET request to fetch all image posts."""
         # Get posts from all users, ordered by likes_count and created_at
         posts = ImagePost.objects.filter(
             is_deleted=False
@@ -93,5 +99,5 @@ class LikePostView(APIView):
         except Exception as exc:
             return Response(
                 {'error': str(exc)},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_400_BAD_REQUEST
             )
