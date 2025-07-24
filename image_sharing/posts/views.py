@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-
+from django.db import transaction
 from .serializers.post import DefaultPostSerializer
 from .models import ImagePost, Like
 
@@ -22,11 +22,15 @@ class UploadImagePost(APIView):
         """
         Handle POST request to upload an image post.
         """
-        serializer = DefaultPostSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = DefaultPostSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                with transaction.atomic():
+                    serializer.save(user=request.user)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FeedImagePostView(APIView):
@@ -38,22 +42,23 @@ class FeedImagePostView(APIView):
     def get(self, request):
         """Handle GET request to fetch image posts from followed users.
         Returns a paginated list of posts ordered by creation date."""
-        # Get list of users that the current user follows
-        following_users = request.user.following.values_list('followed', flat=True)
+        try:
+            # Get list of users that the current user follows
+            following_users = request.user.following.values_list('followed', flat=True)
+            # Get posts from followed users, ordered by created_at
+            posts = ImagePost.objects.filter(
+                user__in=following_users,
+                is_deleted=False
+            ).order_by('-created_at')
+            # Apply pagination
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            paginated_posts = paginator.paginate_queryset(posts, request)
 
-        # Get posts from followed users, ordered by created_at
-        posts = ImagePost.objects.filter(
-            user__in=following_users,
-            is_deleted=False
-        ).order_by('-created_at')
-
-        # Apply pagination
-        paginator = PageNumberPagination()
-        paginator.page_size = 20
-        paginated_posts = paginator.paginate_queryset(posts, request)
-
-        serializer = DefaultPostSerializer(paginated_posts, many=True)
-        return paginator.get_paginated_response(serializer.data)
+            serializer = DefaultPostSerializer(paginated_posts, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 class AllImagePostView(APIView):
     """
@@ -63,18 +68,21 @@ class AllImagePostView(APIView):
 
     def get(self, request):
         """Handle GET request to fetch all image posts."""
-        # Get posts from all users, ordered by likes_count and created_at
-        posts = ImagePost.objects.filter(
-            is_deleted=False
-        ).order_by('-likes_count', '-created_at')
+        try:
+            # Get posts from all users, ordered by likes_count and created_at
+            posts = ImagePost.objects.filter(
+                is_deleted=False
+            ).order_by('-likes_count', '-created_at')
 
-        # Apply pagination
-        paginator = PageNumberPagination()
-        paginator.page_size = 20
-        paginated_posts = paginator.paginate_queryset(posts, request)
+            # Apply pagination
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            paginated_posts = paginator.paginate_queryset(posts, request)
 
-        serializer = DefaultPostSerializer(paginated_posts, many=True)
-        return paginator.get_paginated_response(serializer.data)
+            serializer = DefaultPostSerializer(paginated_posts, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 class LikePostView(APIView):
     """
@@ -90,10 +98,10 @@ class LikePostView(APIView):
             post = ImagePost.objects.get(id=post_id, is_deleted=False)
             if Like.objects.filter(user=request.user, post=post).exists():
                 Like.objects.filter(user=request.user, post=post).delete()
-                return Response({'message': 'Post unliked successfully'}, status=status.HTTP_200_OK)
+                return Response({'detail': 'Post unliked successfully'}, status=status.HTTP_200_OK)
             else:
                 Like.objects.get_or_create(user=request.user, post=post)
-                return Response({'message': 'Post liked successfully'}, status=status.HTTP_200_OK)
+                return Response({'detail': 'Post liked successfully'}, status=status.HTTP_200_OK)
         except ImagePost.DoesNotExist:
             return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as exc:

@@ -19,13 +19,14 @@ class SignupSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'password']
 
-    def validate_email(self, value):
+    def validate_email(self, value: str) -> str:
         """Validate that the email is unique and in lowercase."""
         if User.objects.filter(email=value.lower()).exists():
             raise serializers.ValidationError("This email is already in use.")
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> User:
+        """Create a new user with the validated data."""
         user = User.objects.create_user(
             username=validated_data['email'].lower(),
             email=validated_data['email'].lower(),
@@ -39,13 +40,10 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
 
-    def validate(self, attrs):
-        attrs['email'] = attrs['email'].lower()
-        email = attrs.get('email')
-        password = attrs.get('password')
-
-        if not email or not password:
+    def validate(self, attrs: dict) -> dict:
+        """Validate the login credentials."""
+        if not attrs.get('email') or not attrs.get('password'):
             raise serializers.ValidationError("Email and password are required.")
-        if '@' not in email:
+        if '@' not in attrs.get('email'):
             raise serializers.ValidationError("Enter a valid email address.")
         return attrs

@@ -1,0 +1,291 @@
+{
+	"info": {
+		"_postman_id": "47ea374f-f9a2-4542-9f4d-81aa1f9c4b04",
+		"name": "Image Sharing Application",
+		"description": "Backend Image Sharing Application  \nA Django REST API backend for an image sharing social media application. This application provides a robust backend system for handling user authentication, image posts, following/follower relationships, and social interactions.\n\n🌟 Features  \n\\- User authentication (signup/login)\n\n\\- Image post creation and management\n\n\\- Follow/unfollow functionality\n\n\\- Feed generation based on followed users\n\n\\- Like/unlike posts\n\n\\- User profiles with statistics\n\n\\- Token-based authentication",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16553227",
+		"_collection_link": "https://gold-eclipse-614086.postman.co/workspace/5814599b-ff59-489c-b919-d2082ebe3fcc/collection/16553227-47ea374f-f9a2-4542-9f4d-81aa1f9c4b04?action=share&source=collection_link&creator=16553227"
+	},
+	"item": [
+		{
+			"name": "Accounts (Auth)",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test_2@gmail.com\",\n    \"password\": \"12345678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/signup/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"signup",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test_2@gmail.com\",\n    \"password\": \"12345678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Follow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token ff430ec8db522a363ca9383a1bff837678075e2c\t",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/follow/13/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"follow",
+								"13",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UnFollow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token ff430ec8db522a363ca9383a1bff837678075e2c",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/unfollow/13/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"unfollow",
+								"13",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token ff430ec8db522a363ca9383a1bff837678075e2c",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/all-users/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"all-users",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "Like/Unlike Post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token ff430ec8db522a363ca9383a1bff837678075e2c",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/posts/like-unlike/65ba7d3e-b7eb-48da-a18d-6e53385553b4/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"like-unlike",
+								"65ba7d3e-b7eb-48da-a18d-6e53385553b4",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Images Post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token 5a31f4ceaeb4e93dbe9421eea3be774473bd8469",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "images",
+									"type": "file",
+									"src": "/Users/apple/Downloads/AI_Image.png"
+								},
+								{
+									"key": "caption",
+									"value": "Hey Mates, Checkout my First Second AI Image.",
+									"type": "text"
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts/upload-image/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"upload-image",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Feed",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token ff430ec8db522a363ca9383a1bff837678075e2c",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/posts/feed/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"feed",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all PostImages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token 5a31f4ceaeb4e93dbe9421eea3be774473bd8469",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/posts/all-posts/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"all-posts",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

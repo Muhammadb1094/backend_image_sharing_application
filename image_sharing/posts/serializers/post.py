@@ -6,9 +6,7 @@ from users.serializers.user import DefaultUserSerializer
 from rest_framework import serializers
 
 class ImageSerializer(serializers.ModelSerializer):
-    """
-    Serializer for individual image in an image post.
-    """
+    """Serializer for individual image in an image post."""
     class Meta:
         """Meta class for ImageSerializer."""
         model = Image
@@ -25,7 +23,8 @@ class DefaultPostSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ['id', 'created_at', 'updated_at', 'likes_count', 'user']
 
-    def create(self, validated_data):
+    def create(self, validated_data) -> ImagePost:
+        """Create a new ImagePost instance with associated images."""
         validated_data['user'] = self.context['request'].user
         post = super().create(validated_data)
 
@@ -35,11 +34,12 @@ class DefaultPostSerializer(serializers.ModelSerializer):
             image_serializer.save(post=post)
         return post
 
-    def get_user(self, obj):
+    def get_user(self, obj) -> dict:
         """Get the user information for the post image object."""
         return DefaultUserSerializer(obj.user).data
 
-    def to_representation(self, instance):
+    def to_representation(self, instance) -> dict:
+        """Customize the representation of the ImagePost instance."""
         representation = super().to_representation(instance)
         representation['images'] = instance.images.all().values_list('image', flat=True)
         return representation

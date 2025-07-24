@@ -13,6 +13,7 @@ from django.db.models import F, Case, When, Value, IntegerField
 
 
 class Profile(models.Model):
+    """User profile model with denormalized fields for performance optimization."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     # Denormalized fields for performance
     followers_count = models.PositiveIntegerField(default=0, db_index=True)
@@ -23,6 +24,7 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Indexes for denormalized fields to speed up queries"""
         indexes = [
             models.Index(fields=['followers_count']),
             models.Index(fields=['following_count']),
@@ -34,10 +36,13 @@ class Profile(models.Model):
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create a profile when a User is created."""
     if created:
         Profile.objects.create(user=instance)
 
 class Follow(models.Model):
+    """Model representing a follow relationship between users.
+    This model uses UUIDs for the primary key to ensure better distribution"""
     # Use UUID for better distribution in sharded databases
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
@@ -45,6 +50,7 @@ class Follow(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
+        """Unique constraint to prevent duplicate follow relationships"""
         unique_together = ('follower', 'followed')
         indexes = [
             models.Index(fields=['follower', 'created_at']),
@@ -62,6 +68,7 @@ class Follow(models.Model):
 
 @receiver(post_save, sender=Follow)
 def update_follow_counts_on_create(sender, instance, created, **kwargs):
+    """Update follow counts when a Follow relationship is created."""
     if created:
         Profile.objects.filter(user=instance.follower).update(
             following_count=F('following_count') + 1
@@ -73,6 +80,7 @@ def update_follow_counts_on_create(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Follow)
 def update_follow_counts_on_delete(sender, instance, **kwargs):
+    """Update follow counts when a Follow relationship is deleted."""
     Profile.objects.filter(user=instance.follower).update(
         following_count=Case(
             When(following_count__gt=0, then=F('following_count') - 1),

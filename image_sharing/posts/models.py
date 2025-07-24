@@ -13,9 +13,7 @@ from django.db.models import F, Case, When, Value, IntegerField
 
 
 class Image(models.Model):
-    """
-    Model to store images associated with posts.
-    """
+    """Model to store images associated with posts."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     image = models.ImageField(upload_to='images/')
     post = models.ForeignKey('ImagePost', on_delete=models.CASCADE, related_name='images')
@@ -24,6 +22,8 @@ class Image(models.Model):
         return f"Image {self.id} for post {self.post.id}"
 
 class ImagePost(models.Model):
+    """Model to represent an image post in the application.
+    Includes fields for user, caption, and denormalized counters for likes."""
     # Use UUID for better distribution
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
@@ -38,6 +38,7 @@ class ImagePost(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Meta options for ImagePost model."""
         indexes = [
             models.Index(fields=['user', 'created_at']),
             models.Index(fields=['created_at']),
@@ -46,10 +47,12 @@ class ImagePost(models.Model):
         ordering = ['-created_at']
 
     def increment_likes_count(self):
+        """Increment the likes count for this post."""
         self.likes_count = F('likes_count') + 1
         self.save(update_fields=['likes_count'])
 
     def decrement_likes_count(self):
+        """Decrement the likes count for this post."""
         self.likes_count = F('likes_count') - 1
         self.save(update_fields=['likes_count'])
 
@@ -59,6 +62,7 @@ class ImagePost(models.Model):
 
 @receiver(post_save, sender=ImagePost)
 def update_posts_count_on_create(sender, instance, created, **kwargs):
+    """Signal to update the posts count in the user's profile when a post is created."""
     if created:
         Profile.objects.filter(user=instance.user).update(
             posts_count=F('posts_count') + 1
@@ -67,6 +71,7 @@ def update_posts_count_on_create(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=ImagePost)
 def update_posts_count_on_delete(sender, instance, **kwargs):
+    """Signal to update the posts count in the user's profile when a post is deleted."""
     if not instance.is_deleted:  # Only decrease if it wasn't soft deleted
         Profile.objects.filter(user=instance.user).update(
             posts_count=Case(
@@ -78,6 +83,8 @@ def update_posts_count_on_delete(sender, instance, **kwargs):
 
 
 class Like(models.Model):
+    """Model to represent a like on an image post.
+    Includes denormalized fields for performance optimization."""
     # Use UUID for better distribution
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
@@ -85,6 +92,7 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
+        """Meta options for Like model."""
         unique_together = ('user', 'post')
         indexes = [
             models.Index(fields=['post', 'created_at']),
@@ -97,9 +105,11 @@ class Like(models.Model):
 
 @receiver(post_delete, sender=Like)
 def update_likes_count_on_delete(sender, instance, **kwargs):
+    """Signal to update the likes count for the post when a like is deleted."""
     instance.post.decrement_likes_count()
 
 @receiver(post_save, sender=Like)
 def update_likes_count_on_create(sender, instance, created, **kwargs):
+    """Signal to update the likes count for the post when a like is created."""
     if created:
         instance.post.increment_likes_count()

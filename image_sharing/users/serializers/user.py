@@ -24,7 +24,8 @@ class DefaultUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'is_active', 'date_joined', 'profile']
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User) -> dict:
+        """Customize the representation of the User instance to include profile data."""
         representation = super().to_representation(instance)
         representation['profile'] = DefaultProfileSerializer(instance.profile).data
         return representation
